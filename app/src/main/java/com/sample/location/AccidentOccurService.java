@@ -1,28 +1,21 @@
 package com.sample.location;
 
+import android.app.Service;
 import android.content.Intent;
-import android.location.Address;
-import android.location.Geocoder;
-import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import org.json.JSONObject;
+import androidx.annotation.Nullable;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-
-public class AccidentOccurActivity extends AppCompatActivity {
+public class AccidentOccurService extends Service {
     // Flag that indicates it's test
     private static final boolean TEST_ALERT = true;
     private static final boolean TEST_API = false;
@@ -36,25 +29,23 @@ public class AccidentOccurActivity extends AppCompatActivity {
     private String APIKeys = "LydaYiDETwYmI2UMH5Ncugmv9Hd4LEjUx39foqGvQ%2F3wiW4b%2FjlCnJW%2B43o%2BpZ8aYciwE5rDRoOGqRhQd1bJ4g%3D%3D";
     private String requestParameter = "&searchYearCd=2017&siDo=SIDO&guGun=GUGUN&numOfRows=10&pageNo=1";
     private String requests[] = {"http://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman?ServiceKey=",
-                                "http://apis.data.go.kr/B552061/schoolzoneChild/getRestSchoolzoneChild?ServiceKey=",
-                                "http://apis.data.go.kr/B552061/frequentzoneChild/getRestFrequentzoneChild?ServiceKey="};
+            "http://apis.data.go.kr/B552061/schoolzoneChild/getRestSchoolzoneChild?ServiceKey=",
+            "http://apis.data.go.kr/B552061/frequentzoneChild/getRestFrequentzoneChild?ServiceKey="};
 
     int requestCodes[] = new int[2];
     String responses[] = new String[3];
     String jsonResponse[] = new String[3];
 
-
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    public void onCreate() {
+        super.onCreate();
+        Log.d(TAG, "onCreate AccidentOccurService");
+
+
     }
-
     @Override
-    protected void onStart() {
-        super.onStart();
-
-        Intent intent = getIntent();
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "start AccidentOccurService");
         double latitude = intent.getDoubleExtra("latitude", 0);
         double longitude = intent.getDoubleExtra("longitude", 0);
 
@@ -64,6 +55,7 @@ public class AccidentOccurActivity extends AppCompatActivity {
         }
 
         checkAccidentOccurrence(latitude, longitude);
+        return super.onStartCommand(intent, flags, startId);
     }
 
     private void checkAccidentOccurrence(double latitude, double longitude) {
@@ -115,9 +107,9 @@ public class AccidentOccurActivity extends AppCompatActivity {
             alert_message = "보행자 사고다발 지역입니다. 주변 움직이는 차량을 주의하세요.";
 
             // make and start new intent for passing alert_message
-            Intent intent = new Intent(AccidentOccurActivity.this, /*modify*/MainActivity.class);
-            intent.putExtra("alert_msg", alert_message);
-            startActivity(intent);
+//            Intent intent = new Intent(AccidentOccurService.this, /*modify*/AlertService.class);
+//            intent.putExtra("alert_msg", alert_message);
+//            startService(intent);
         }
     }
 
@@ -169,7 +161,7 @@ public class AccidentOccurActivity extends AppCompatActivity {
         HashMap<double[][], String> polygons = new HashMap<>();
         // parse json and return a list of (polygon coordinates, kind of accident)
 //        JSONObject jObject = new JSONObject(jsonResponse);
-        
+
         return polygons;
     }
 
@@ -207,5 +199,11 @@ public class AccidentOccurActivity extends AppCompatActivity {
     }
     private double rad2deg(double rad) {
         return (rad * 180 / Math.PI);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 }

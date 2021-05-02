@@ -46,12 +46,14 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash);
+        setContentView(R.layout.activity_main);
+//        setContentView(R.layout.activity_splash);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+//        setContentView(R.layout.activity_main);
         checkLocationPermission();
     }
 
@@ -164,12 +166,15 @@ public class SplashActivity extends AppCompatActivity {
 //            fusedLocationProviderClient.removeLocationUpdates(locationCallback);
 
 //            Intent intent = new Intent(SplashActivity.this, MainActivity.class);
-            Intent intent = new Intent(SplashActivity.this, AccidentOccurActivity.class);
+//            Intent intent = new Intent(SplashActivity.this, AccidentOccurActivity.class);
+            Intent intent = new Intent(SplashActivity.this, AccidentOccurService.class);
 
             intent.putExtra("latitude", latitude);
             intent.putExtra("longitude", longitude);
-            startActivity(intent);
-            finish();
+//            startActivity(intent);
+            Log.d(TAG, "start service");
+            startService(intent);
+//            finish();
         }
 
         @Override
