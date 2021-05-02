@@ -28,6 +28,7 @@ public class AccidentOccurService_fore extends Service {
     private static final boolean TEST_ALERT = true;
     private static final boolean TEST_API = false;
     // Variables used when testing
+    private boolean START = false;
     private double initial_latitude;
     private double initial_longitude;
 
@@ -49,6 +50,7 @@ public class AccidentOccurService_fore extends Service {
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "on start command");
         String input = intent.getStringExtra("inputExtra");
         createNotificationChannel();
         Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -65,10 +67,13 @@ public class AccidentOccurService_fore extends Service {
         double longitude = intent.getDoubleExtra("longitude", 0);
 
         if (TEST_ALERT) {
-            Log.d(TAG, "initial_latitude : " + latitude);
-            Log.d(TAG, "initial_longitude : " + longitude);
-            initial_latitude = latitude;
-            initial_longitude = longitude;
+            if (!START) {
+                Log.d(TAG, "initial_latitude : " + latitude);
+                Log.d(TAG, "initial_longitude : " + longitude);
+                initial_latitude = latitude;
+                initial_longitude = longitude;
+                START = true;
+            }
         }
 
         checkAccidentOccurrence(latitude, longitude);
