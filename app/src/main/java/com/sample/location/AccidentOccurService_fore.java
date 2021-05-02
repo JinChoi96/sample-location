@@ -1,11 +1,17 @@
 package com.sample.location;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -15,7 +21,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AccidentOccurService extends Service {
+public class AccidentOccurService_fore extends Service {
+    public static final String CHANNEL_ID = "ForegroundServiceChannel";
+
     // Flag that indicates it's test
     private static final boolean TEST_ALERT = true;
     private static final boolean TEST_API = false;
@@ -38,8 +46,36 @@ public class AccidentOccurService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "onCreate AccidentOccurService");
+    }
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String input = intent.getStringExtra("inputExtra");
+        createNotificationChannel();
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                0, notificationIntent, 0);
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Foreground Service")
+                .setContentText(input)
+                .setSmallIcon(R.drawable.sw_thumb);
+                .setContentIntent(pendingIntent)
+                .build();
+        startForeground(1, notification);
+        //do heavy work on a background thread
+        //stopSelf();
+        return START_NOT_STICKY;
+    }
 
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Foreground Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(serviceChannel);
+        }
     }
 
     @Override

@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Switch;
 
@@ -48,95 +49,147 @@ public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private double longitude, latitude;
+
     SwitchCompat switchCompat_gps, switchCompat_beacon;
     Spinner spinner;
+    Button btn_activate, btn_terminate;
+
+    int gps_flag = 0;
+    int beacon_flag = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Log.d(TAG, "setContentView");
 
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        setLayout();
-    }
-
-    private void setLayout() {
         switchCompat_gps = findViewById(R.id.switchButton_gps);
         switchCompat_beacon = findViewById(R.id.switchButton_beacon);
-        spinner = findViewById(R.id.spinner);
 
+        //spinner = findViewById(R.id.spinner);
+
+        btn_activate = (Button)findViewById(R.id.btn_activate);
+        btn_terminate = (Button)findViewById(R.id.btn_terminate);
+
+        /*
         String[] frequency = new String [] {"0", "1", "10", "20"};
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, frequency);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+        */
 
+        //GPS 스위치
         switchCompat_gps.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (switchCompat_gps.isChecked()){
-                    checkLocationPermission();
+
+                    gps_flag = 1;
+                    Log.d(TAG, "gps_flag to 1");
+
                 }else {
+
+                    gps_flag = 0;
+                    Log.d(TAG, "gps_flag to 0");
+
 
                 }
             }
         });
 
+        //Beacon 스위치
         switchCompat_beacon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (switchCompat_gps.isChecked()){
 
+                    beacon_flag = 1;
+
 
                 }else {
 
+                    beacon_flag = 0;
+
                 }
             }
 
 
         });
-
+        /*
+        //Frequency 스피너
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
                 if (position == 0){
-
-
                 }
                 if (position == 1){
-
-
                 }
-
                 if (position == 2){
-
                 }
-
                 if (position == 3){
-
                 }
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });*/
+
+        //서비스 activate
+        btn_activate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                //startService(new Intent(getApplicationContext(), GPS_Service.class));
+                //startService(new Intent(getApplicationContext(), Beacon_Service.class));
+
+
+                if (gps_flag == 1 && beacon_flag == 1) {
+                    Log.d(TAG, "activate gps 1, beacon 1");
+//                    startService(new Intent(getApplicationContext(), AccidentOccurService.class));
+                    checkLocationPermission();
+//                    startService(new Intent(getApplicationContext(), Beacon_Service.class));
+                }
+
+                if (gps_flag == 1 && beacon_flag == 0) {
+                    Log.d(TAG, "activate gps 1, beacon 0");
+
+//                    startService(new Intent(getApplicationContext(), AccidentOccurService.class));
+                    checkLocationPermission();                }
+
+                if (gps_flag == 0 && beacon_flag == 1) {
+                    Log.d(TAG, "activate gps 0, beacon 0");
+
+//                    startService(new Intent(getApplicationContext(), Beacon_Service.class));
+                }
+            }
+        });
+
+        //서비스 terminate
+        btn_terminate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG, "terminate service");
+                fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+                stopService(new Intent(MainActivity.this, AccidentOccurService.class));
+//                stopService(new Intent(getApplicationContext(), Beacon_Service.class));
+
+                gps_flag = 0;
+                beacon_flag = 0;
+                Log.d(TAG, "gps flag: " + gps_flag);
 
             }
         });
+
     }
 
     private void checkLocationPermission() { // 위치정보 접근권한 확인
-        int accessLocation = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION); // 권한 확인 API
-        if (accessLocation == PackageManager.PERMISSION_GRANTED) {
-            checkLocationSetting();
-        } else { // 권한 요청 API
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, GPS_UTIL_LOCATION_PERMISSION_REQUEST_CODE);
+            int accessLocation = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION); // 권한 확인 API
+            if (accessLocation == PackageManager.PERMISSION_GRANTED) {
+                checkLocationSetting();
+            } else { // 권한 요청 API
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, GPS_UTIL_LOCATION_PERMISSION_REQUEST_CODE);
+            }
         }
-    }
+
 
     // ActivityCompat.requestPermissions의 결과
     // 연결고리 -> GPS_UTIL_LOCATION_PERMISSION_REQUEST_CODE
@@ -176,44 +229,45 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkLocationSetting() {
-        locationRequest = LocationRequest.create();
-        locationRequest.setPriority(DEFAULT_LOCATION_REQUEST_PRIORITY);
-        locationRequest.setInterval(DEFAULT_LOCATION_REQUEST_INTERVAL);
-        locationRequest.setFastestInterval(DEFAULT_LOCATION_REQUEST_FAST_INTERVAL);
+        Log.d(TAG, "check location setting");
+            locationRequest = LocationRequest.create();
+            locationRequest.setPriority(DEFAULT_LOCATION_REQUEST_PRIORITY);
+            locationRequest.setInterval(DEFAULT_LOCATION_REQUEST_INTERVAL);
+            locationRequest.setFastestInterval(DEFAULT_LOCATION_REQUEST_FAST_INTERVAL);
 
-        SettingsClient settingsClient = LocationServices.getSettingsClient(this);
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest).setAlwaysShow(true);
-        settingsClient.checkLocationSettings(builder.build())
-                .addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
-                    @Override
-                    public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                        // 앱의 위치정보 접근권한, 기기의 위치 서비스 활성화 확인 후 위치정보 얻어오는 곳
-                        // build.gradle에서 google service, location 포함되어야 함.
-                        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
-                        // locationCallback
-                        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
-                    }
-                })
-                .addOnFailureListener(MainActivity.this, new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        int statusCode = ((ApiException) e).getStatusCode();
-                        switch (statusCode) { // 설정을 변경해서 해결 가능
-                            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                                try {
-                                    ResolvableApiException rae = (ResolvableApiException) e;
-                                    // activity 띄우고 onactivityresult로 결과 받기 위한 code 설정
-                                    rae.startResolutionForResult(MainActivity.this, GPS_UTIL_LOCATION_RESOLUTION_REQUEST_CODE);
-                                } catch (IntentSender.SendIntentException sie) {
-                                    Log.w(TAG, "unable to start resolution for result due to " + sie.getLocalizedMessage());
-                                }
-                                break;
-                            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: // 설정을 변경해서 해결 불가능, gps sensor 없는경우
-                                String errorMessage = "location settings are inadequate, and cannot be fixed here. Fix in Settings.";
-                                Log.e(TAG, errorMessage);
+            SettingsClient settingsClient = LocationServices.getSettingsClient(this);
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest).setAlwaysShow(true);
+            settingsClient.checkLocationSettings(builder.build())
+                    .addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
+                        @Override
+                        public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
+                            // 앱의 위치정보 접근권한, 기기의 위치 서비스 활성화 확인 후 위치정보 얻어오는 곳
+                            // build.gradle에서 google service, location 포함되어야 함.
+                            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
+                            // locationCallback
+                            fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
                         }
-                    }
-                });
+                    })
+                    .addOnFailureListener(MainActivity.this, new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            int statusCode = ((ApiException) e).getStatusCode();
+                            switch (statusCode) { // 설정을 변경해서 해결 가능
+                                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                                    try {
+                                        ResolvableApiException rae = (ResolvableApiException) e;
+                                        // activity 띄우고 onactivityresult로 결과 받기 위한 code 설정
+                                        rae.startResolutionForResult(MainActivity.this, GPS_UTIL_LOCATION_RESOLUTION_REQUEST_CODE);
+                                    } catch (IntentSender.SendIntentException sie) {
+                                        Log.w(TAG, "unable to start resolution for result due to " + sie.getLocalizedMessage());
+                                    }
+                                    break;
+                                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: // 설정을 변경해서 해결 불가능, gps sensor 없는경우
+                                    String errorMessage = "location settings are inadequate, and cannot be fixed here. Fix in Settings.";
+                                    Log.e(TAG, errorMessage);
+                            }
+                        }
+                    });
     }
 
     @Override
@@ -240,10 +294,8 @@ public class MainActivity extends AppCompatActivity {
 //            Intent intent = new Intent(SplashActivity.this, MainActivity.class);
 //            Intent intent = new Intent(SplashActivity.this, AccidentOccurActivity.class);
             Intent intent = new Intent(MainActivity.this, AccidentOccurService.class);
-
             intent.putExtra("latitude", latitude);
             intent.putExtra("longitude", longitude);
-//            startActivity(intent);
             Log.d(TAG, "start service");
             startService(intent);
 //            finish();
