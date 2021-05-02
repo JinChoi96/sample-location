@@ -21,6 +21,14 @@ import java.util.Map;
 
 
 public class AccidentOccurActivity extends AppCompatActivity {
+    // Flag that indicates it's test
+    private static final boolean TEST_ALERT = true;
+    private static final boolean TEST_API = false;
+    // Variables used when testing
+    private double initial_latitude;
+    private double initial_longitude;
+
+
     private static final String TAG = "AccidentOccurActivity";
 
     private String APIKeys = "LydaYiDETwYmI2UMH5Ncugmv9Hd4LEjUx39foqGvQ%2F3wiW4b%2FjlCnJW%2B43o%2BpZ8aYciwE5rDRoOGqRhQd1bJ4g%3D%3D";
@@ -47,6 +55,11 @@ public class AccidentOccurActivity extends AppCompatActivity {
         double latitude = intent.getDoubleExtra("latitude", 0);
         double longitude = intent.getDoubleExtra("longitude", 0);
 
+        if(TEST_ALERT) {
+            initial_latitude = latitude;
+            initial_longitude = longitude;
+        }
+
         checkAccidentOccurrence(latitude, longitude);
     }
 
@@ -57,37 +70,52 @@ public class AccidentOccurActivity extends AppCompatActivity {
         requestParameter.replace("GUGUN", Integer.toString(requestCodes[1])); // 시구군코드
 
         // 사용할 API 개수만큼 request 보내고 json 결과 받기
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             requests[i] += APIKeys;
             requests[i] += requestParameter;
         }
-        for(int i = 0; i < 3 ; i++) {
+        for (int i = 0; i < 3 ; i++) {
             jsonResponse[i] = getAPIResponse((requests[i]));
         }
 
-        //TESTING
-//        String testURL = "http://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman?ServiceKey=LydaYiDETwYmI2UMH5Ncugmv9Hd4LEjUx39foqGvQ%2F3wiW4b%2FjlCnJW%2B43o%2BpZ8aYciwE5rDRoOGqRhQd1bJ4g%3D%3D&searchYearCd=2017&siDo=11&guGun=680&numOfRows=10&pageNo=1";
-//        String test = getAPIResponse(testURL);
-//        Log.d(TAG, "API response : "+test);
+        if(TEST_API) {
+            String testURL = "http://apis.data.go.kr/B552061/frequentzoneOldman/getRestFrequentzoneOldman?ServiceKey=LydaYiDETwYmI2UMH5Ncugmv9Hd4LEjUx39foqGvQ%2F3wiW4b%2FjlCnJW%2B43o%2BpZ8aYciwE5rDRoOGqRhQd1bJ4g%3D%3D&searchYearCd=2017&siDo=11&guGun=680&numOfRows=10&pageNo=1";
+            String test = getAPIResponse(testURL);
+            Log.d(TAG, "API response : "+test);
+        }
 
         // TODO : json에서 폴리곤 결과 파싱
         Map<double[][], String> polygons = new HashMap<>();
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             polygons.putAll(parseJson(jsonResponse[i]));
         }
 
         // TODO : 폴리곤 안에 현재 (위도, 경도)가 포함되는지 판단
         String alert = null;
-        for(Map.Entry<double[][], String> elem : polygons.entrySet()) {
+        for (Map.Entry<double[][], String> elem : polygons.entrySet()) {
             if(hasAccidentOccured(latitude, longitude, elem.getKey())) {
                 alert = elem.getValue();
                 break;
             }
         }
 
+        // TEST
+        if (TEST_ALERT) {
+            if (hasAccidentOccured_stub(latitude, longitude)) {
+                alert = "보행자 사고다발 지역입니다. 주변 움직이는 차량을 주의하세요.";
+            }
+        }
+
         // 사고다발지역인 경우 해당 alert string 을 결과값으로 반환
-        String alert_message = "보행자 사고다발 지역입니다. 주변 움직이는 차량을 주의하세요.";
-        // TODO? make intent and putExtra?
+        String alert_message = null;
+        if (alert != null) {
+            alert_message = "보행자 사고다발 지역입니다. 주변 움직이는 차량을 주의하세요.";
+
+            // make and start new intent for passing alert_message
+            Intent intent = new Intent(AccidentOccurActivity.this, /*modify*/MainActivity.class);
+            intent.putExtra("alert_msg", alert_message);
+            startActivity(intent);
+        }
     }
 
     // TODO
@@ -143,7 +171,36 @@ public class AccidentOccurActivity extends AppCompatActivity {
     // TODO
     private boolean hasAccidentOccured(double latitude, double longitude, double[][] coords) {
         boolean ret = false;
-
         return ret;
+    }
+
+    // stub
+    // returns true if the distance between initial position and current position is [min_d, max_d]
+    private boolean hasAccidentOccured_stub(double latitude, double longitude) {
+        boolean ret = false;
+        int min_d = 10; // minimal distance that causes an alert (m)
+        int max_d = 20; // maximum distance that causes an alert (m)
+        double theta = initial_longitude - longitude;
+        double dist = Math.sin(deg2rad(initial_latitude)) * Math.sin(deg2rad(latitude)) +
+                Math.cos(deg2rad(initial_latitude)) * Math.cos(deg2rad(latitude)) * Math.cos(deg2rad(theta));
+
+        dist = Math.acos(dist);
+        dist = rad2deg(dist);
+        dist = dist * 60 * 1.1515;
+        dist = dist * 1609.344; // to meter
+
+        Log.d(TAG, "hasAccidentOccured_stub: dist(m) = " + dist);
+
+        if (dist >= min_d && dist <= max_d) {
+            ret = true;
+        }
+        return ret;
+    }
+
+    private double deg2rad(double deg) {
+        return (deg * Math.PI / 180.0);
+    }
+    private double rad2deg(double rad) {
+        return (rad * 180 / Math.PI);
     }
 }
