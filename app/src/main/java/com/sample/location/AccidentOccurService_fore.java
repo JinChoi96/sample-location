@@ -57,10 +57,22 @@ public class AccidentOccurService_fore extends Service {
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Foreground Service")
                 .setContentText(input)
-                .setSmallIcon(R.drawable.sw_thumb);
+                .setSmallIcon(R.drawable.sw_thumb)
                 .setContentIntent(pendingIntent)
                 .build();
         startForeground(1, notification);
+        double latitude = intent.getDoubleExtra("latitude", 0);
+        double longitude = intent.getDoubleExtra("longitude", 0);
+
+        if (TEST_ALERT) {
+            Log.d(TAG, "initial_latitude : " + latitude);
+            Log.d(TAG, "initial_longitude : " + longitude);
+            initial_latitude = latitude;
+            initial_longitude = longitude;
+        }
+
+        checkAccidentOccurrence(latitude, longitude);
+
         //do heavy work on a background thread
         //stopSelf();
         return START_NOT_STICKY;
@@ -77,24 +89,24 @@ public class AccidentOccurService_fore extends Service {
             manager.createNotificationChannel(serviceChannel);
         }
     }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-            Log.d(TAG, "start AccidentOccurService");
-            double latitude = intent.getDoubleExtra("latitude", 0);
-            double longitude = intent.getDoubleExtra("longitude", 0);
-
-            if (TEST_ALERT) {
-                Log.d(TAG, "initial_latitude : " + latitude);
-                Log.d(TAG, "initial_longitude : " + longitude);
-                initial_latitude = latitude;
-                initial_longitude = longitude;
-            }
-
-            checkAccidentOccurrence(latitude, longitude);
-        return super.onStartCommand(intent, flags, startId);
-
-    }
+//
+//    @Override
+//    public int onStartCommand(Intent intent, int flags, int startId) {
+//            Log.d(TAG, "start AccidentOccurService");
+//            double latitude = intent.getDoubleExtra("latitude", 0);
+//            double longitude = intent.getDoubleExtra("longitude", 0);
+//
+//            if (TEST_ALERT) {
+//                Log.d(TAG, "initial_latitude : " + latitude);
+//                Log.d(TAG, "initial_longitude : " + longitude);
+//                initial_latitude = latitude;
+//                initial_longitude = longitude;
+//            }
+//
+//            checkAccidentOccurrence(latitude, longitude);
+//        return super.onStartCommand(intent, flags, startId);
+//
+//    }
 
     @Override
     public void onDestroy() {

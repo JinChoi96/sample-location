@@ -169,7 +169,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.d(TAG, "terminate service");
                 fusedLocationProviderClient.removeLocationUpdates(locationCallback);
-                stopService(new Intent(MainActivity.this, AccidentOccurService.class));
+//                stopService(new Intent(MainActivity.this, AccidentOccurService.class));
+                stopService(new Intent(MainActivity.this, AccidentOccurService_fore.class));
+
 //                stopService(new Intent(getApplicationContext(), Beacon_Service.class));
 
                 gps_flag = 0;
@@ -293,7 +295,9 @@ public class MainActivity extends AppCompatActivity {
 
 //            Intent intent = new Intent(SplashActivity.this, MainActivity.class);
 //            Intent intent = new Intent(SplashActivity.this, AccidentOccurActivity.class);
-            Intent intent = new Intent(MainActivity.this, AccidentOccurService.class);
+//            Intent intent = new Intent(MainActivity.this, AccidentOccurService.class);
+            Intent intent = new Intent(MainActivity.this, AccidentOccurService_fore.class);
+
             intent.putExtra("latitude", latitude);
             intent.putExtra("longitude", longitude);
             Log.d(TAG, "start service");
